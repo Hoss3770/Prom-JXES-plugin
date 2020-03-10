@@ -9,6 +9,7 @@
    		<conf name="lib" />
 	</configurations>  
     <dependencies defaultconf="default">
+	   <dependency org="com.jsoniter" name="jsoniter" rev="0.9.23"/>
        <dependency org="prom" name="ProM-Plugins" rev="latest" changing="true" transitive="true" />
        <dependency org="prom" name="ApacheUtils" rev="latest" changing="true" transitive="true" />
        <dependency org="prom" name="BasicUtils" rev="latest" changing="true" transitive="true" />

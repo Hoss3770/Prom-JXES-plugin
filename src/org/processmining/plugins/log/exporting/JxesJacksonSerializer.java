@@ -203,6 +203,7 @@ public final class JxesJacksonSerializer implements XSerializer {
 		out.close();
 		String duration = " (" + (System.currentTimeMillis() - start) + " msec.)";
 		XLogging.log("finished serializing log" + duration, XLogging.Importance.DEBUG);
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 	}
 
 	private ObjectNode compileTrace(XTrace trace){

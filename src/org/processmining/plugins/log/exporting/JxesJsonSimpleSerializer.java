@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.ListIterator;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.deckfour.xes.classification.XEventAttributeClassifier;
 import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.extension.XExtension;
@@ -32,9 +33,7 @@ import org.json.JSONObject;
  *
  */
 public final class JxesJsonSimpleSerializer implements XSerializer {
-
-	
-
+	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 	
 
 	/*
@@ -214,6 +213,7 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 		out.close();
 		String duration = " (" + (System.currentTimeMillis() - start) + " msec.)";
 		XLogging.log("finished serializing log" + duration, XLogging.Importance.DEBUG);
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 	}
 
 	private JSONObject compileTrace(XTrace trace) throws JSONException{

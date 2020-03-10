@@ -1,12 +1,12 @@
 package org.processmining.plugins.log;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.deckfour.xes.classification.XEventAttributeClassifier;
 import org.deckfour.xes.classification.XEventClassifier;
@@ -32,16 +32,35 @@ import org.processmining.framework.plugin.annotations.PluginLevel;
 import org.processmining.log.utils.XLogBuilder; 
 
 @Plugin(name = "Open JXES", level = PluginLevel.PeerReviewed, parameterLabels = { "Filename" }, returnLabels = { "Log (single process)" }, returnTypes = { XLog.class })
-@UIImportPlugin(description = "ProM log files JXES", extensions = {"json"})
+@UIImportPlugin(description = "ProM log files JXES (simple) ", extensions = {"json"})
 public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 	throws Exception {
-		StringWriter writer = new StringWriter();
-		IOUtils.copy(input, writer);
-		String theString = writer.toString();
+		
+		// set the name displayed in prom to the name of the file
+		context.getFutureResult(0).setLabel(filename);
+		
+//		StringWriter writer = new StringWriter();
+//		IOUtils.copy(input, writer);
+//		String theString = writer.toString();
+//		JSONObject obj = new JSONObject(theString);
 		
 		
+		BufferedReader bR = new BufferedReader(  new InputStreamReader(input));
+		String line = "";
+
+		StringBuilder responseStrBuilder = new StringBuilder();
+		while((line =  bR.readLine()) != null){
+
+		    responseStrBuilder.append(line);
+		}
+		input.close();
+
+		JSONObject obj= new JSONObject(responseStrBuilder.toString());
+		
+		//parse json object through json tokener
+//		JSONObject obj = new JSONObject(new JSONTokener(input));
 		
 		
 //		PrintStream err = new PrintStream(new java.io.OutputStream(){
@@ -51,36 +70,38 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 //		System.setErr(err);
 ////		System.setOut(err);
 
-		JSONObject obj = new JSONObject(theString);
-
+	
 		
-//		XFactory a = new XFactoryNaiveImpl();
-		
-		
-//		a.createAttributeBoolean("a", , arg2)
+		// create a XLogBuilder to iteratively build the XLog 
 		XLogBuilder builder = XLogBuilder.newInstance().startLog("JXES-log");
 		
 		
 		
-		
-		
+		//build all traces
 		JSONArray traces = obj.getJSONArray("traces");
 		for(int i = 0; i < traces.length();i++){
 			
+			//get trace as JSONObject
 			JSONObject trace = (JSONObject) traces.get(i);
+			// get trace-attributes
 			JSONObject traceAttrs = trace.getJSONObject("attrs");
-			JSONArray events = trace.getJSONArray("events");
-			
+			//get all trace-events
+			JSONArray traceEvents = trace.getJSONArray("events");
+			// add trace to the log with an identifier 
 			builder.addTrace("t" + i);
+			
+			// get all keys (attribute names)
 			Iterator<String> traceAttrKeys = traceAttrs.keys();
+			// iterate and create every trace attribute , by passing the name (key) and the value to the createAttr method 
 			while(traceAttrKeys.hasNext()) {
 				String key = traceAttrKeys.next();
 				builder.addAttribute(createAttr(key,traceAttrs.get(key)));
 			}
 			
-			for(int j = 0; j < events.length();j++){
+			// iterate on the events and create all trace-events.
+			for(int j = 0; j < traceEvents.length();j++){
 				builder.addEvent("e" + j);
-				JSONObject event =  (JSONObject) events.get(j);
+				JSONObject event =  (JSONObject) traceEvents.get(j);
 				Iterator<String> eventAttrKeys = event.keys();
 				while(eventAttrKeys.hasNext()) {
 					String key = eventAttrKeys.next();
@@ -90,67 +111,88 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			}
 		}
 		
+		// return the XLog object from the builder
 		XLog log =  builder.build();
 		
+		
+		//add log-attributes to the XLog object
 		try {
-			//add log attributes
+			// get the log-children object (which contains the log-attributes)
 			JSONObject logChildren = obj.getJSONObject("log-children");
+			
+			// get the attribute names
 			Iterator<String> logKeys = logChildren.keys();
-		 
+			
+			// create an AttributeMap which contains all of the log-attributes
 			XAttributeMapImpl logAttributes = new XAttributeMapImpl();
+			
+			// iterate and add the attributes to the map
 			while(logKeys.hasNext()) {
 				String key = logKeys.next();
 				logAttributes.put(key, createAttr(key,logChildren.get(key)));
 			}
 			
+			// set the log attributes to the AttributeMap
 			log.setAttributes(logAttributes);
+			
 		} catch (JSONException e) {
+			// if the log-children object does not exist or is not defined correctly throw warning and skip parsing the log-attributes
 			System.err.println("log attributes not deinfed correctly in file : skiping");
 		}
 
 		
-		// add extensions
-		
+		// add extensions to the XLog object
 		try {
+			//iterate over all extension 
 			JSONArray jsonExtensions = obj.getJSONArray("extensions");
 			for(int j = 0; j < jsonExtensions.length();j++){
 				XExtension extension = null;
 				
 				JSONObject jsonExtension = (JSONObject) jsonExtensions.get(j);
 				
+				//use the prefix of the extension and the extension-manger to check if the extension is known
 				String prefix = jsonExtension.getString("prefix");
 				extension = XExtensionManager.instance().getByPrefix(jsonExtension.getString("prefix"));
 	
 				
 				if (extension != null) { 
+					//extension known
+					// add to the list of extensions of the XLog
 					log.getExtensions().add(extension);
 				}else {
+					//extension was not found --> unknown
+					// throw warning and skip extension 
 					System.err.println("Unknown extension: " + prefix);
 				}
 			}
 		} catch (JSONException e) {
+			// if the extensions array does not exist or is not defined correctly throw warning and skip parsing the extension
 			System.err.println("extensions not deinfed correctly in file : skiping");
 		}
 		
 		
-		// add classfiers 
-		
+		// add classifiers to the XLog object
 		try {
 			JSONObject classifiers = obj.getJSONObject("classifiers");
+			//get all classifier names
 			Iterator<String> classfierKeys = classifiers.keys();
 			while(classfierKeys.hasNext()) {
 				String key = classfierKeys.next();
+				// prepare the classifier array
 				JSONArray classfierArrayJSON = classifiers.getJSONArray(key);
 				String[] classfierArray = new String[classfierArrayJSON.length()];
 				for(int j = 0; j < classfierArrayJSON.length();j++){
 					classfierArray[j] = (String) classfierArrayJSON.get(j);
 				}
+				// use the String [] to create new XEventAttributeClassifier
 				XEventClassifier classifier = new XEventAttributeClassifier(
 						key, classfierArray);
+				// add the new classifiers to the list of classifiers of the XLog
 				log.getClassifiers().add(classifier);
 			}
 		
 		} catch (JSONException e) {
+			// if the classifiers object does not exist or is not defined correctly throw warning and skip parsing the classifiers
 			System.err.println("classfiers not deinfed correctly in file : skiping");
 		}
 		
@@ -159,7 +201,8 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 		
 		JSONObject global = obj.getJSONObject("global");
 		
-		// add global trace
+		
+		// add global trace attributes
 		JSONObject globalTrace = global.getJSONObject("trace");
 		
 		Iterator<String> traceKeys = globalTrace.keys();
@@ -168,6 +211,7 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			log.getGlobalTraceAttributes().add(createAttr(key,globalTrace.get(key)));
 		}
 		
+		// add global event attributes
 		JSONObject globalEvent = global.getJSONObject("event");
 		Iterator<String> eventKeys = globalEvent.keys();
 		while(eventKeys.hasNext()) {
@@ -175,9 +219,8 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			log.getGlobalEventAttributes().add(createAttr(key,globalEvent.get(key)));
 		}	
 		
-		
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 		return log;
-		
 		
 		
 		
@@ -219,10 +262,29 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 //	}
 	
 	
+	/**
+	 * 
+	 * Depending on the type of the attribute given as a parameter the right attribute implementation is used.
+	 * 
+	 * @param the attribute name
+	 * @param the attribute value	 
+	 * @return an attribute ready to be added to the log object
+	 * @see org.deckfour.xes.model.XAttribute
+	 */
 	
 	XAttribute createAttr(String key, Object attr) throws JSONException {
 		XAttribute attribute = null;
-		if (attr instanceof Boolean) {
+		if (attr instanceof String) {
+			String text = (String) attr;
+			Date date;
+			try {
+				date = DateUtil.parse(text);
+				attribute = new XAttributeTimestampImpl(key , date);
+			} catch (ParseException e) {
+				attribute = new XAttributeLiteralImpl( key, text);
+			}	
+			
+		}else if (attr instanceof Boolean) {
 			attribute =  new XAttributeBooleanImpl(key, (Boolean) attr);
 		}else if (attr instanceof Integer) {
 			attribute = new XAttributeDiscreteImpl( key, (Integer)attr );
@@ -239,23 +301,22 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 				attribute = list;
 			}
 		}else if (attr instanceof JSONObject) {
-			JSONObject object = (JSONObject) attr;
+			JSONObject object = (JSONObject) attr;	
 			
-			Iterator<String> objectKeys = object.keys();
 			XAttributeMapImpl values = new XAttributeMapImpl();
-			XAttributeContainerImpl map = new XAttributeContainerImpl(key);
+			XAttribute map = new XAttributeContainerImpl(key);
 			
 			
 			// the case of nested attributes
-			if (object.length() == 2 && object.has("value") && object.has("nested-attributes") && object.get("nested-attributes") instanceof JSONObject ){
-				return createNestedAttribute(key, object);
+			if (object.length() == 2 && object.has("value") && object.has("nested-attributes")){
+				
+				map = createAttr(key,attr.get("value"));
+				object = (JSONObject) object.get("nested-attributes");
+				
 			}
 			
-			objectKeys = object.keys();
-			
-			
-			
-			
+			Iterator<String> objectKeys = object.keys();
+						
 			
 			while(objectKeys.hasNext()) {
 				String objectKey = objectKeys.next();
@@ -264,36 +325,27 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			}
 			map.setAttributes(values);
 			attribute = map;
-		}else if (attr instanceof String) {
-			String text = (String) attr;
-			Date date;
-			try {
-				date = DateUtil.parse(text);
-				attribute = new XAttributeTimestampImpl(key , date);
-			} catch (ParseException e) {
-				attribute = new XAttributeLiteralImpl( key, text);
-			}	
-			
 		}
 		return attribute;
 	}
 	
 	
-	XAttribute createNestedAttribute(String key,JSONObject attr) throws JSONException {
-		XAttribute attribute = createAttr(key, attr.get("value"));
-		
-		JSONObject nestedAttributes =  attr.getJSONObject("nested-attributes");
-		XAttributeMapImpl values = new XAttributeMapImpl();
-		Iterator<String> objectKeys = nestedAttributes.keys();
-		while(objectKeys.hasNext()) {
-			String objectKey = objectKeys.next();
-			XAttribute objectAttribute = createAttr(objectKey, nestedAttributes.get(objectKey));
-			values.put(objectKey,objectAttribute);
-		}
-
-		attribute.setAttributes(values);
-		return attribute;
-	}
+	
+//	XAttribute createNestedAttribute(String key,JSONObject attr) throws JSONException {
+//		XAttribute attribute = createAttr(key, attr.get("value"));
+//		
+//		JSONObject nestedAttributes =  attr.getJSONObject("nested-attributes");
+//		XAttributeMapImpl values = new XAttributeMapImpl();
+//		Iterator<String> objectKeys = nestedAttributes.keys();
+//		while(objectKeys.hasNext()) {
+//			String objectKey = objectKeys.next();
+//			XAttribute objectAttribute = createAttr(objectKey, nestedAttributes.get(objectKey));
+//			values.put(objectKey,objectAttribute);
+//		}
+//
+//		attribute.setAttributes(values);
+//		return attribute;
+//	}
 	
 	
 }

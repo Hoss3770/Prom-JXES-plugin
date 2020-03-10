@@ -35,15 +35,21 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 	throws Exception {
 		
+		
+		// set the name displayed in prom to the name of the file
+		context.getFutureResult(0).setLabel(filename);
+		
 //		StringWriter writer = new StringWriter();
 //		IOUtils.copy(input, writer);
 //		String theString = writer.toString();
 		
 		
 		
+		//read json file
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode obj = mapper.readTree(input);
-				
+	
+
 		
 //		PrintStream err = new PrintStream(new java.io.OutputStream(){
 //			public void write(int b) throws IOException {
@@ -52,32 +58,36 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 //		System.setErr(err);
 //		System.setOut(err);
 		
-//		XFactory a = new XFactoryNaiveImpl();
 		
 		
-//		a.createAttributeBoolean("a", , arg2)
+		// create a XLogBuilder to iteratively build the XLog object
 		XLogBuilder builder = XLogBuilder.newInstance().startLog("JXES-log");
 		
 			
-		
+		//build all traces
 		JsonNode traces = obj.get("traces");
+		//loop on traces
 		for(int i = 0; i < traces.size();i++){
-			
+			//get trace as JsonNode
 			JsonNode trace =  traces.get(i);
+			// get the attributes of this trace
 			JsonNode traceAttrs = trace.get("attrs");
+			// get the events of this trace
 			JsonNode events = trace.get("events");
-			
+			// add the trace to the log object
 			builder.addTrace("t" + i);
+			//loop on the trace attributes
 			Iterator<String> traceAttrKeys = traceAttrs.fieldNames();
 			while(traceAttrKeys.hasNext()) {
 				String key = traceAttrKeys.next();
-				
+				// add the attribute to the trace in the log object
 				builder.addAttribute(createAttr(key,traceAttrs.get(key)));
 			}
-			
+			// loop on the events of the trace 
 			for(int j = 0; j < events.size();j++){
 				builder.addEvent("e" + j);
 				JsonNode event =  events.get(j);
+				// loop on the event attributes
 				Iterator<String> eventAttrKeys = event.fieldNames();
 				while(eventAttrKeys.hasNext()) {
 					String key = eventAttrKeys.next();
@@ -87,44 +97,49 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 			}
 		}
 		
+		// return the XLog object from the builder
 		XLog log =  builder.build();
 		
 	
-			//add log attributes
-			JsonNode logChildren = obj.get("log-children");
-			Iterator<String> logKeys = logChildren.fieldNames();
+		//add log-attributes to the XLog object
+		JsonNode logChildren = obj.get("log-children");
+		Iterator<String> logKeys = logChildren.fieldNames();
 		 
-			XAttributeMapImpl logAttributes = new XAttributeMapImpl();
-			while(logKeys.hasNext()) {
-				String key = logKeys.next();
-				logAttributes.put(key, createAttr(key,logChildren.get(key)));
-			}
+		XAttributeMapImpl logAttributes = new XAttributeMapImpl();
+		while(logKeys.hasNext()) {
+			String key = logKeys.next();
+			logAttributes.put(key, createAttr(key,logChildren.get(key)));
+		}
 			
-			log.setAttributes(logAttributes);
+		log.setAttributes(logAttributes);
 		
-		// add extensions
 		
-			
-				JsonNode jsonExtensions = obj.get("extensions");
-				if(jsonExtensions != null ) {
-					for(int j = 0; j < jsonExtensions.size();j++){
-						XExtension extension = null;
-						
-						JsonNode jsonExtension = jsonExtensions.get(j);
-						
-						String prefix = jsonExtension.get("prefix").asText();
-						extension = XExtensionManager.instance().getByPrefix(prefix);
-			
-						
-						if (extension != null) { 
-							log.getExtensions().add(extension);
-						}else {
-							System.err.println("Unknown extension: " + prefix);
-						}
-					}
+		// add extensions to the XLog object
+		JsonNode jsonExtensions = obj.get("extensions");
+		if(jsonExtensions != null ) {
+			for(int j = 0; j < jsonExtensions.size();j++){
+				XExtension extension = null;
+				
+				JsonNode jsonExtension = jsonExtensions.get(j);
+				
+				String prefix = jsonExtension.get("prefix").asText();
+				extension = XExtensionManager.instance().getByPrefix(prefix);
+	
+				
+				if (extension != null) { 
+					log.getExtensions().add(extension);
 				}else {
-					System.err.print("extensions not deinfed correctly in file : skiping");
+					System.err.println("Unknown extension: " + prefix);
 				}
+			}
+		}else {
+			System.err.print("extensions not deinfed correctly in file : skiping");
+		}
+		
+		
+		
+			
+				
 	
 
 		
@@ -172,6 +187,7 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 		}	
 		
 		
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 		return log;
 		
 		
