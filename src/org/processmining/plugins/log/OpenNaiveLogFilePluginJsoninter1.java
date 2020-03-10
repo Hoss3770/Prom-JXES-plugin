@@ -41,6 +41,7 @@ public class OpenNaiveLogFilePluginJsoninter1 extends OpenLogFilePlugin {
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 			throws Exception {
 		
+		// set the name displayed in prom to the name of the file
 		context.getFutureResult(0).setLabel(filename);
 		
 		// set dynamic mode for performance reasons --> see https://jsoniter.com/java-features.html
@@ -69,7 +70,7 @@ public class OpenNaiveLogFilePluginJsoninter1 extends OpenLogFilePlugin {
 		////		System.setOut(err);
 
 
-		// create a XLogBuilder to iteratively build the XLog 
+		// create a XLogBuilder to iteratively build the XLog object
 		XLogBuilder builder = XLogBuilder.newInstance().startLog("JXES-log");
 
 		//build all traces
@@ -175,6 +176,18 @@ public class OpenNaiveLogFilePluginJsoninter1 extends OpenLogFilePlugin {
 		return log;
 		
 	}
+	
+	
+	/**
+	 * 
+	 * Depending on the type of the attribute given as a parameter the right attribute implementation is used.
+	 * 
+	 * @param the attribute name
+	 * @param the attribute value	 
+	 * @return an attribute ready to be added to the log object
+	 * @see org.deckfour.xes.model.XAttribute
+	 */
+	
 
 	XAttribute createAttr(String key, Any attr) {
 		
