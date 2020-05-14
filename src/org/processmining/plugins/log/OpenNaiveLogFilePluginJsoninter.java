@@ -27,8 +27,6 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginLevel;
 import org.processmining.log.utils.XLogBuilder;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import com.jsoniter.any.Any;
@@ -67,72 +65,8 @@ public class OpenNaiveLogFilePluginJsoninter extends OpenLogFilePlugin {
 		    responseStrBuilder.append(line);
 		}
 		input.close();
+		
 		// parse json string
-		
-		
-		JsonFactory jsonFactory = new JsonFactory();
-	    JsonParser jsonParser = jsonFactory.createParser("{'ext':[{'key-1':'val-1'},{'key-2':'val-2'}]}".replace('\'', '"'));
-	    
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    
-	    System.out.println("key 1: " + jsonParser.getCurrentName());
-	    System.out.println("value 1: " + jsonParser.nextValue());
-	    System.out.println("value 1: " + jsonParser.getText());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println("key 2: " + jsonParser.getCurrentName());
-	    System.out.println("value 1: " + jsonParser.nextValue());
-	    System.out.println("val 2: " +jsonParser.getText());
-	    
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    
-	    System.out.println("key 1: " + jsonParser.getCurrentName());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.getValueAsBoolean());
-	    
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println("key 2:" + jsonParser.getCurrentName());
-	    System.out.println("value 2:" + jsonParser.getText());
-	    
-	    
-	    
-	    
-	    
-	    
-	   
-	    System.out.println(jsonParser.nextValue());
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.nextToken());
-	    
-	    System.out.println(jsonParser.getCurrentName());
-	    System.out.println(jsonParser.getCurrentValue());
-	    System.out.println((String)jsonParser.getCurrentValue());
-	    
-	    System.out.println(jsonParser.nextToken());
-	    System.out.println(jsonParser.getCurrentName());
-	    System.out.println(jsonParser.getCurrentValue());
-	    System.out.println((String)jsonParser.getCurrentValue());
-	    
-	    
-	    
-		
-		if(true) {
-			return null;
-		}
-	    
 		Any obj = JsonIterator.deserialize(responseStrBuilder.toString());
 
 		responseStrBuilder = null; 

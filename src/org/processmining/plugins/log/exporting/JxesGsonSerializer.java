@@ -112,7 +112,7 @@ public final class JxesGsonSerializer implements XSerializer {
 			addAttr(attr,logChildren);
 		}
 
-
+		// add log attrs to output
 		output.add("log-attrs",logAttrs);
 		output.add("log-children",logChildren);
 
