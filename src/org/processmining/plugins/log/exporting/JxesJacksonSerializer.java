@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  */
 public final class JxesJacksonSerializer implements XSerializer {
-	
+
 	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 	private final ObjectMapper mapper = new ObjectMapper();
 
@@ -86,51 +86,54 @@ public final class JxesJacksonSerializer implements XSerializer {
 		long start = System.currentTimeMillis();
 
 
-//		PrintStream err = new PrintStream(new java.io.OutputStream(){
-//			public void write(int b) throws IOException {
-//
-//			}});
-//		System.setErr(err);
-		
-		
-		
-		
+		//		PrintStream err = new PrintStream(new java.io.OutputStream(){
+		//			public void write(int b) throws IOException {
+		//
+		//			}});
+		//		System.setErr(err);
+
+
+
+		//create output json object
 		ObjectNode output = mapper.createObjectNode();;
 
 		ObjectNode logAttrs = mapper.createObjectNode();;
 		ObjectNode logChildren = mapper.createObjectNode();;
 
-
+		// add log properties
 		logAttrs.put("xes.version", XRuntimeUtils.XES_VERSION);
 		logAttrs.put("xes.features", "nested-attributes");
 		logAttrs.put("openxes.version", XRuntimeUtils.OPENXES_VERSION);
-//		logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
+		//		logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
 
 
+		// iterate over log attributes
 		for (XAttribute attr : log.getAttributes().values()) {
 			addAttr(attr,logChildren);
 		}
 
-
+		// add log attrs to output
 		output.set("log-attrs",logAttrs);
 		output.set("log-children",logChildren);
 
 
 
+		//create global attributes
 		ObjectNode global = mapper.createObjectNode();;
 		ObjectNode globalTrace = mapper.createObjectNode();;
 		ObjectNode globalEvent = mapper.createObjectNode();;
 
 
-
+		//iterate over global trace attrs
 		for (XAttribute attr : log.getGlobalTraceAttributes()) {
 			addAttr(attr,globalTrace);
 		}
+		//iterate over global event attrs
 		for (XAttribute attr : log.getGlobalEventAttributes()) {
 			addAttr(attr,globalEvent);
 		}
 
-
+		// add them to output
 		global.set("trace", globalTrace);
 		global.set("event", globalEvent);
 		output.set("global", global);
@@ -140,65 +143,57 @@ public final class JxesJacksonSerializer implements XSerializer {
 
 
 		ArrayNode extensions =  mapper.createArrayNode();;
+		// iterate over all extensions
+		for (XExtension extension : log.getExtensions()) {
+			ObjectNode extensionObject =  mapper.createObjectNode();;
 
-			for (XExtension extension : log.getExtensions()) {
-				ObjectNode extensionObject =  mapper.createObjectNode();;
+			extensionObject.put("name", extension.getName());
+			extensionObject.put("prefix", extension.getPrefix());
+			extensionObject.put("uri", extension.getUri().toString());
 
-				extensionObject.put("name", extension.getName());
-				extensionObject.put("prefix", extension.getPrefix());
-				extensionObject.put("uri", extension.getUri().toString());
+			extensions.add(extensionObject);
+		}
 
-				extensions.add(extensionObject);
-			}
-
-			output.set("extensions",extensions);
+		// add extensions to output
+		output.set("extensions",extensions);
 
 
 
 		ObjectNode classifiers = mapper.createObjectNode();;
+		// iterate over all classifiers 
+		for (XEventClassifier classifier : log.getClassifiers()) {
+			if (classifier instanceof XEventAttributeClassifier) {
+				XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
+				ArrayNode classifierArray =  mapper.createArrayNode();;
 
-			for (XEventClassifier classifier : log.getClassifiers()) {
-				if (classifier instanceof XEventAttributeClassifier) {
-					XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
-					ArrayNode classifierArray =  mapper.createArrayNode();;
-
-					String[] myArray = attrClass.getDefiningAttributeKeys();
-					for (int i = 0; i < myArray.length; i++) {
-						classifierArray.add(myArray[i]);
-				      }
-
-					classifiers.set(attrClass.name(), classifierArray );
-
+				
+				String[] classifierKeys = attrClass.getDefiningAttributeKeys();
+				//add classifierKeys to output array
+				for (int i = 0; i < classifierKeys.length; i++) {
+					classifierArray.add(classifierKeys[i]);
 				}
+				// add classifier to object of classifiers 
+				classifiers.set(attrClass.name(), classifierArray );
+
 			}
-			output.set("classifiers",classifiers);
+		}
+		// add classifiers object to output
+		output.set("classifiers",classifiers);
 
 
-
-
-
-
-
+		
 		ArrayNode traces =  mapper.createArrayNode();;
+		//iterate over all traces
+		for (XTrace trace : log) {
+			traces.add(compileTrace(trace));
 
-			for (XTrace trace : log) {
+		}
+		// add traces array to output
+		output.set("traces", traces);
 
-				traces.add(compileTrace(trace));
-
-			}
-			output.set("traces", traces);
-
-
-//		FileChannel dstChannel = ((FileOutputStream) out).getChannel();
-		String out_str = output.toString();
-		byte[] output_string = out_str.getBytes("UTF-8");
-		out.write(output_string);
-//		ByteBuffer buf = ByteBuffer.allocateDirect(output_string.length);
-//		for (int k = 0; k< output_string.length; k++){
-//			buf.put(output_string[k]);
-//			}
-//		dstChannel.write(buf);
-//		dstChannel.close();
+		
+		// write object to json file
+		mapper.writeValue(out, output);
 
 		out.close();
 		String duration = " (" + (System.currentTimeMillis() - start) + " msec.)";
@@ -210,21 +205,24 @@ public final class JxesJacksonSerializer implements XSerializer {
 		ObjectNode traceJson = mapper.createObjectNode();;
 		ObjectNode attributes = mapper.createObjectNode();;
 		ArrayNode events =  mapper.createArrayNode();;
-	
 
+
+		//iterate over all trace attrs
 		for (XAttribute attr : trace.getAttributes().values()){
-				addAttr(attr,attributes);
+			addAttr(attr,attributes);
 		}
 
-
+		// iterate over all trace events
 		for (ListIterator<XEvent> iterator = trace.listIterator(); iterator.hasNext();) {
 			XEvent event = iterator.next();
-				events.add(compileEvent(event));
+			events.add(compileEvent(event));
 		}
 
 
-
+		// add traces attrs to output
 		traceJson.set("attrs", attributes);
+		
+		// add trace events to output
 		traceJson.set("events",events);
 
 
@@ -234,7 +232,7 @@ public final class JxesJacksonSerializer implements XSerializer {
 
 	private ObjectNode compileEvent(XEvent event){
 		ObjectNode eventJson = mapper.createObjectNode();;
-
+		//iterate over all event attrs
 		for (XAttribute attr : event.getAttributes().values()) {
 			addAttr(attr,eventJson);
 		}
@@ -245,7 +243,7 @@ public final class JxesJacksonSerializer implements XSerializer {
 
 
 	protected void addAttr(XAttribute attribute,ObjectNode json){
-	
+
 
 
 		if (attribute instanceof XAttributeTimestamp) {

@@ -310,7 +310,7 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			// the case of nested attributes
 			if (object.length() == 2 && object.has("value") && object.has("nested-attributes")){
 				
-				map = createAttr(key,attr.get("value"));
+				map = createAttr(key , ((JSONObject) attr).get("value"));
 				object = (JSONObject) object.get("nested-attributes");
 			}
 			

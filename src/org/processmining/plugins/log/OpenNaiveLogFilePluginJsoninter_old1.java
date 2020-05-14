@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -35,13 +34,13 @@ import com.jsoniter.any.Any;
 
 @Plugin(name = "Open JXES", level = PluginLevel.PeerReviewed, parameterLabels = { "Filename" }, returnLabels = {
 		"Log (single process)" }, returnTypes = { XLog.class })
-@UIImportPlugin(description = "ProM log files JXES (Jsoninter 2)", extensions = { "json" })
-public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
+@UIImportPlugin(description = "ProM log files JXES (Jsoninter New)", extensions = { "json" })
+public class OpenNaiveLogFilePluginJsoninterNew extends OpenLogFilePlugin {
 	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 			throws Exception {
-		
+
 		BufferedReader bR = new BufferedReader(  new InputStreamReader(input));
 		String line = "";
 
@@ -51,8 +50,10 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 		    responseStrBuilder.append(line);
 		}
 		input.close();
-		Any obj = JsonIterator.deserialize(responseStrBuilder.toString());
 
+
+		LogStructure obj = JsonIterator.deserialize(responseStrBuilder.toString(),LogStructure.class);
+		
 		
 
 		//		PrintStream err = new PrintStream(new java.io.OutputStream(){
@@ -65,31 +66,38 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 		
 		
 
-		XLogBuilder builder = XLogBuilder.newInstance().startLog("JXES-log");
 
-		Any traces = obj.get("traces");
+		XLogBuilder builder = XLogBuilder.newInstance().startLog("JXES-log");
 		int i = -1;
-		for (Any trace : traces) {
+		for(Trace trace: obj.traces){
 			i += 1;
-			Map<String, Any> traceAttrs = trace.get("attrs").asMap();
-			Any events = trace.get("events");
+			Any traceAttrs = trace.attrs;
+			Any[] events = trace.events;
 			builder.addTrace("t" + i);
-			traceAttrs.forEach((key, value) -> builder.addAttribute(createAttr(key, value)));
-			
+			Set<String> traceAttrKeys = traceAttrs.keys();
+			for (String key : traceAttrKeys) {
+				builder.addAttribute(createAttr(key, traceAttrs.get(key)));
+			}
 			int j = -1;
 			for (Any event : events) {
-				Map<String, Any> eventMap = event.asMap();
 				j += 1;
 				builder.addEvent("e" + j);
-				eventMap.forEach((key, value) -> builder.addAttribute(createAttr(key, value)));
+				Set<String> eventAttrKeys = event.keys();
+				for (String key : eventAttrKeys) {
+					builder.addAttribute(createAttr(key, traceAttrs.get(key)));
+				}
+
 			}
 		}
 
 		XLog log = builder.build();
 
 		//add log attributes
-		Map<String, Any> logChildren = obj.get("log-children").asMap();;
-		logChildren.forEach((key, value) -> builder.addAttribute(createAttr(key, value)));
+		Any logChildren = obj.get("log-children");
+		Set<String> logKeys = logChildren.keys();
+		for (String key : logKeys) {
+			builder.addAttribute(createAttr(key, logChildren.get(key)));
+		}
 		XAttributeMapImpl logAttributes = new XAttributeMapImpl();
 		log.setAttributes(logAttributes);
 
@@ -131,9 +139,9 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 		}
 
 		// add global attributes
-
+		
 		Any global = obj.get("global");
-
+		
 		// add global trace
 		Any globalTrace = global.get("trace");
 
@@ -147,14 +155,13 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 		for (String key : eventKeys) {
 			builder.addAttribute(createAttr(key, globalEvent.get(key)));
 		}
-		
-		
+
 		return log;
 		
 	}
 
 	XAttribute createAttr(String key, Any attr) {
-		System.out.println();
+		
 		XAttribute attribute = null;
 		if (attr.valueType() == ValueType.BOOLEAN) {
 			attribute = new XAttributeBooleanImpl(key, attr.toBoolean());
@@ -182,7 +189,7 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 			// the case of nested attributes
 			if (attr.size() == 2 && attr.get("value").valueType() != ValueType.INVALID && attr.get("nested-attributes").valueType() != ValueType.INVALID
 					&& attr.get("nested-attributes").valueType() == ValueType.OBJECT) {
-				
+				System.out.print("nested");
 				return createNestedAttribute(key, attr);
 			}
 
@@ -223,5 +230,23 @@ public class OpenNaiveLogFilePluginJsoninter2 extends OpenLogFilePlugin {
 		attribute.setAttributes(values);
 		return attribute;
 	}
+	
+	public class LogStructure {
+	    
+	    public Any log_children;
+	    public Any log;
+	    public Any[] extensions;
+	    public Any classfiers;
+	    public Any global;
+	    public Trace[] traces;
+	    
+	}
+
+	public class Trace {
+	    public Any attrs;
+	    public Any[] events;
+	}
+	
+	
 
 }

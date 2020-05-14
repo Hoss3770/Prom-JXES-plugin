@@ -1,6 +1,8 @@
 package org.processmining.plugins.log.exporting;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.Date;
 import java.util.ListIterator;
@@ -34,7 +36,7 @@ import org.json.JSONObject;
  */
 public final class JxesJsonSimpleSerializer implements XSerializer {
 	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
-	
+
 
 	/*
 	 * (non-Javadoc)
@@ -84,30 +86,32 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 		long start = System.currentTimeMillis();
 
 
-//		PrintStream err = new PrintStream(new java.io.OutputStream(){
-//			public void write(int b) throws IOException {
-//
-//			}});
-//		System.setErr(err);
+		//		PrintStream err = new PrintStream(new java.io.OutputStream(){
+		//			public void write(int b) throws IOException {
+		//
+		//			}});
+		//		System.setErr(err);
 
+		//create output json object
 		JSONObject output = new JSONObject();
 
 		JSONObject logAttrs = new JSONObject();
 		JSONObject logChildren = new JSONObject();
 
 		try {
-
+			
+			// add log properties
 			logAttrs.put("xes.version", XRuntimeUtils.XES_VERSION);
 			logAttrs.put("xes.features", "nested-attributes");
 			logAttrs.put("openxes.version", XRuntimeUtils.OPENXES_VERSION);
-//			logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
+			//logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
 
-
+			// iterate over log attributes
 			for (XAttribute attr : log.getAttributes().values()) {
 				addAttr(attr,logChildren);
 			}
 
-
+			// add log attrs to output
 			output.put("log-attrs",logAttrs);
 			output.put("log-children",logChildren);
 
@@ -115,21 +119,24 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 		}catch (JSONException e) {
 
 		}
-
+		
+		//create global attributes
 		JSONObject global = new JSONObject();
 		JSONObject globalTrace = new JSONObject();
 		JSONObject globalEvent = new JSONObject();
 
-	try{
+		try{
 
+			//iterate over global trace attrs
 			for (XAttribute attr : log.getGlobalTraceAttributes()) {
 				addAttr(attr,globalTrace);
 			}
+			//iterate over global event attrs
 			for (XAttribute attr : log.getGlobalEventAttributes()) {
 				addAttr(attr,globalEvent);
 			}
 
-
+			// add them to output
 			global.put("trace", globalTrace);
 			global.put("event", globalEvent);
 			output.put("global", global);
@@ -138,11 +145,11 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 
 		}
 
-
-
-
+		
 		JSONArray extensions =  new JSONArray();
 		try {
+			
+			// iterate over all extensions
 			for (XExtension extension : log.getExtensions()) {
 				JSONObject extensionObject =  new JSONObject();
 
@@ -153,6 +160,7 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 				extensions.put(extensionObject);
 
 			}
+			// add extensions to output
 			output.put("extensions",extensions);
 
 		}catch (JSONException e) {
@@ -163,20 +171,25 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 		JSONObject classifiers = new JSONObject();
 
 		try {
+			//iterate over all classifiers 
 			for (XEventClassifier classifier : log.getClassifiers()) {
 				if (classifier instanceof XEventAttributeClassifier) {
 					XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
 					JSONArray classifierArray =  new JSONArray();
 
-					String[] myArray = attrClass.getDefiningAttributeKeys();
-					for (int i = 0; i < myArray.length; i++) {
-						classifierArray.put(myArray[i]);
-				      }
 
+					String[] classifierKeys = attrClass.getDefiningAttributeKeys();
+					//add classifierKeys to output array
+					for (int i = 0; i < classifierKeys.length; i++) {
+						classifierArray.put(classifierKeys[i]);
+					}
+					
+					// add classifier to object of classifiers 
 					classifiers.put(attrClass.name(), classifierArray );
 
 				}
 			}
+			// add classifiers object to output
 			output.put("classifiers",classifiers);
 
 		}catch (JSONException e) {
@@ -189,26 +202,24 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 
 		JSONArray traces =  new JSONArray();
 		try {
+			//iterate over all traces
 			for (XTrace trace : log) {
-
+				
 				traces.put(compileTrace(trace));
 
 			}
+			// add traces array to output
 			output.put("traces", traces);
 		}catch (JSONException e) {
 
 		}
 
-//		FileChannel dstChannel = ((FileOutputStream) out).getChannel();
+		// write object to json file
+		FileChannel dstChannel = ((FileOutputStream) out).getChannel();
 		String out_str = output.toString();
 		byte[] output_string = out_str.getBytes("UTF-8");
+		out_str = null;
 		out.write(output_string);
-//		ByteBuffer buf = ByteBuffer.allocateDirect(output_string.length);
-//		for (int k = 0; k< output_string.length; k++){
-//			buf.put(output_string[k]);
-//			}
-//		dstChannel.write(buf);
-//		dstChannel.close();
 
 		out.close();
 		String duration = " (" + (System.currentTimeMillis() - start) + " msec.)";
@@ -217,12 +228,13 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 	}
 
 	private JSONObject compileTrace(XTrace trace) throws JSONException{
+		
 		JSONObject traceJson = new JSONObject();
 		JSONObject attributes = new JSONObject();
 		JSONArray events =  new JSONArray();
 
 		try {
-
+			//iterate over all trace attrs
 			for (XAttribute attr : trace.getAttributes().values()){
 				addAttr(attr,attributes);
 			}
@@ -232,15 +244,16 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 
 		}
 
-
+		// iterate over all trace events
 		for (ListIterator<XEvent> iterator = trace.listIterator(); iterator.hasNext();) {
 			XEvent event = iterator.next();
-				events.put(compileEvent(event));
+			events.put(compileEvent(event));
 		}
 
 		try {
-
+			// add traces attrs to output
 			traceJson.put("attrs", attributes);
+			// add trace events to output
 			traceJson.put("events",events);
 
 
@@ -256,6 +269,7 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 	private JSONObject compileEvent(XEvent event) throws JSONException{
 		JSONObject eventJson = new JSONObject();
 		try {
+			//iterate over all event attrs
 			for (XAttribute attr : event.getAttributes().values()) {
 				addAttr(attr,eventJson);
 			}

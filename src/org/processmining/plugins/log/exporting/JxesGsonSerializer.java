@@ -1,6 +1,7 @@
 package org.processmining.plugins.log.exporting;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.ListIterator;
@@ -38,7 +39,7 @@ public final class JxesGsonSerializer implements XSerializer {
 
 	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 
-	
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -85,29 +86,28 @@ public final class JxesGsonSerializer implements XSerializer {
 	public void serialize(XLog log, OutputStream out) throws IOException {
 		XLogging.log("start serializing log to .json", XLogging.Importance.DEBUG);
 		long start = System.currentTimeMillis();
+		OutputStreamWriter output_stream = new OutputStreamWriter(out);
+
+		//		PrintStream err = new PrintStream(new java.io.OutputStream(){
+		//			public void write(int b) throws IOException {
+		//
+		//			}});
+		//		System.addErr(err);
 
 
-//		PrintStream err = new PrintStream(new java.io.OutputStream(){
-//			public void write(int b) throws IOException {
-//
-//			}});
-//		System.addErr(err);
-		
-		
-		
-		
-		JsonObject output =new JsonObject();
+		//create output json object
+		JsonObject output = new JsonObject();
+		JsonObject logAttrs = new JsonObject();
+		JsonObject logChildren = new JsonObject();
 
-		JsonObject logAttrs =new JsonObject();
-		JsonObject logChildren =new JsonObject();
-
-
+		// add log properties
 		logAttrs.addProperty("xes.version", XRuntimeUtils.XES_VERSION);
 		logAttrs.addProperty("xes.features", "nested-attributes");
 		logAttrs.addProperty("openxes.version", XRuntimeUtils.OPENXES_VERSION);
-//		logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
+		//		logTag.addAttribute("xmlns", "http://www.xes-standard.org/");
 
 
+		// iterate over log attributes
 		for (XAttribute attr : log.getAttributes().values()) {
 			addAttr(attr,logChildren);
 		}
@@ -117,21 +117,22 @@ public final class JxesGsonSerializer implements XSerializer {
 		output.add("log-children",logChildren);
 
 
-
+		//create global attributes
 		JsonObject global =new JsonObject();
 		JsonObject globalTrace =new JsonObject();
 		JsonObject globalEvent =new JsonObject();
 
 
-
+		//iterate over global trace attrs
 		for (XAttribute attr : log.getGlobalTraceAttributes()) {
 			addAttr(attr,globalTrace);
 		}
+		//iterate over global event attrs
 		for (XAttribute attr : log.getGlobalEventAttributes()) {
 			addAttr(attr,globalEvent);
 		}
 
-
+		// add them to output
 		global.add("trace", globalTrace);
 		global.add("event", globalEvent);
 		output.add("global", global);
@@ -142,64 +143,68 @@ public final class JxesGsonSerializer implements XSerializer {
 
 		JsonArray extensions =  new JsonArray();
 
-			for (XExtension extension : log.getExtensions()) {
-				JsonObject extensionObject = new JsonObject();
+		// iterate over all extensions
+		for (XExtension extension : log.getExtensions()) {
+			JsonObject extensionObject = new JsonObject();
 
-				extensionObject.addProperty("name", extension.getName());
-				extensionObject.addProperty("prefix", extension.getPrefix());
-				extensionObject.addProperty("uri", extension.getUri().toString());
+			extensionObject.addProperty("name", extension.getName());
+			extensionObject.addProperty("prefix", extension.getPrefix());
+			extensionObject.addProperty("uri", extension.getUri().toString());
 
-				extensions.add(extensionObject);
-			}
+			extensions.add(extensionObject);
+		}
 
-			output.add("extensions",extensions);
+		// add extensions to output
+		output.add("extensions",extensions);
 
 
 
-		JsonObject classifiers =new JsonObject();
+		JsonObject classifiers = new JsonObject();
 
-			for (XEventClassifier classifier : log.getClassifiers()) {
-				if (classifier instanceof XEventAttributeClassifier) {
-					XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
-					JsonArray classifierArray =  new JsonArray();
-
-					String[] myArray = attrClass.getDefiningAttributeKeys();
-					for (int i = 0; i < myArray.length; i++) {
-						classifierArray.add( new JsonPrimitive(myArray[i]));
-				      }
-
-					classifiers.add(attrClass.name(), classifierArray );
-
+		// iterate over all classifiers 
+		for (XEventClassifier classifier : log.getClassifiers()) {
+			if (classifier instanceof XEventAttributeClassifier) {
+				XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
+				JsonArray classifierArray =  new JsonArray();
+				
+				String[] classifierKeys = attrClass.getDefiningAttributeKeys();
+				//add classifierKeys to output array
+				for (int i = 0; i < classifierKeys.length; i++) {
+					classifierArray.add( new JsonPrimitive(classifierKeys[i]));
 				}
+				
+				// add classifier to object of classifiers 
+				classifiers.add(attrClass.name(), classifierArray );
+
 			}
-			output.add("classifiers",classifiers);
+		}
+		// add classifiers object to output
+		output.add("classifiers",classifiers);
 
 
 
 
 
 
-
+		
 		JsonArray traces =  new JsonArray();
+		//iterate over all traces
+		for (XTrace trace : log) {
 
-			for (XTrace trace : log) {
+			traces.add(compileTrace(trace));
 
-				traces.add(compileTrace(trace));
+		}
+		// add traces array to output
+		output.add("traces", traces);
 
-			}
-			output.add("traces", traces);
 
 
-//		FileChannel dstChannel = ((FileOutputStream) out).getChannel();
+
+		// write string to json file
 		String out_str = output.toString();
 		byte[] output_string = out_str.getBytes("UTF-8");
 		out.write(output_string);
-//		ByteBuffer buf = ByteBuffer.allocateDirect(output_string.length);
-//		for (int k = 0; k< output_string.length; k++){
-//			buf.addProperty(output_string[k]);
-//			}
-//		dstChannel.write(buf);
-//		dstChannel.close();
+
 
 		out.close();
 		String duration = " (" + (System.currentTimeMillis() - start) + " msec.)";
@@ -211,21 +216,21 @@ public final class JxesGsonSerializer implements XSerializer {
 		JsonObject traceJson =new JsonObject();
 		JsonObject attributes =new JsonObject();
 		JsonArray events =  new JsonArray();
-	
 
+		//iterate over all trace attrs
 		for (XAttribute attr : trace.getAttributes().values()){
-				addAttr(attr,attributes);
+			addAttr(attr,attributes);
 		}
 
-
+		// iterate over all trace events
 		for (ListIterator<XEvent> iterator = trace.listIterator(); iterator.hasNext();) {
 			XEvent event = iterator.next();
-				events.add(compileEvent(event));
+			events.add(compileEvent(event));
 		}
 
-
-
+		// add traces attrs to output
 		traceJson.add("attrs", attributes);
+		// add trace events to output
 		traceJson.add("events",events);
 
 
@@ -234,8 +239,8 @@ public final class JxesGsonSerializer implements XSerializer {
 
 
 	private JsonObject compileEvent(XEvent event){
-		JsonObject eventJson =new JsonObject();
-
+		JsonObject eventJson = new JsonObject();
+		//iterate over all event attrs
 		for (XAttribute attr : event.getAttributes().values()) {
 			addAttr(attr,eventJson);
 		}
@@ -246,7 +251,6 @@ public final class JxesGsonSerializer implements XSerializer {
 
 
 	protected void addAttr(XAttribute attribute,JsonObject json){
-	
 
 
 		if (attribute instanceof XAttributeTimestamp) {

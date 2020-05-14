@@ -4,9 +4,14 @@
 	<classpathentry kind="src" output="tests/bin-test" path="tests/src-test"/>
 	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=Log&amp;ivyXmlPath=ivy.xml&amp;confs=*&amp;ivySettingsPath=ivysettings.xml&amp;loadSettingsOnDemand=false&amp;ivyUserDir=&amp;propertyFiles=">
 		<accessrules>
-			<accessrule kind="nonaccessible" pattern="com/apple/eawt/**"/>
+			<accessrule kind="accessible" pattern="com/apple/eawt/**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<accessrules>
+			<accessrule kind="accessible" pattern="com/apple/eawt/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/jsoniter-0.9.24-FEMTO.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
