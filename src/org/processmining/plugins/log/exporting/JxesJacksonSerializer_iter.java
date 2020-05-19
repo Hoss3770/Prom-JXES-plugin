@@ -1,5 +1,4 @@
 package org.processmining.plugins.log.exporting;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -84,14 +83,13 @@ public final class JxesJacksonSerializer_iter implements XSerializer {
 	 * java.io.OutputStream)
 	 */
 	public void serialize(XLog log, OutputStream out) throws IOException {
-		XLogging.log("start serializing log to .json (Jsoniter) ", XLogging.Importance.DEBUG);
+		XLogging.log("start serializing log to .json (Jackson iter) ", XLogging.Importance.DEBUG);
 		long start = System.currentTimeMillis();
 
-
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		
 		JsonFactory jfactory = new JsonFactory();
 		JsonGenerator writer = jfactory
-		  .createGenerator(stream, JsonEncoding.UTF8);
+		  .createGenerator(out, JsonEncoding.UTF8);
 		
 		
 //		PrintStream err = new PrintStream(new java.io.OutputStream(){
@@ -120,7 +118,6 @@ public final class JxesJacksonSerializer_iter implements XSerializer {
 		
 		
 		//end log-attrs object
-		writer.writeEndObject(); 
 		writer.writeEndObject();
 		
 		//begin log-children object
