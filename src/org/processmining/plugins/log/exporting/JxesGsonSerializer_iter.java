@@ -98,7 +98,7 @@ public final class JxesGsonSerializer_iter implements XSerializer {
 		writer.beginObject();
 		
 		// add json key:
-		writer.name("log-attrs");
+		writer.name("log-properties");
 		
 		//begin log-attrs object 
 		writer.beginObject();
@@ -113,7 +113,7 @@ public final class JxesGsonSerializer_iter implements XSerializer {
 		
 		
 		//begin log-children object
-		writer.name("log-children");
+		writer.name("log-attrs");
 		writer.beginObject();
 	
 
@@ -329,7 +329,7 @@ public final class JxesGsonSerializer_iter implements XSerializer {
 
 		if(nested){
 			// add nested attributes
-			json.name("nested-attributes");
+			json.name("nested-attrs");
 			// begin nested-attributes object
 			json.beginObject();
 			for(XAttribute attr : attribute.getAttributes().values()) {

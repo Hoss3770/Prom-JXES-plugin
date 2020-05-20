@@ -113,8 +113,8 @@ public final class JxesJacksonSerializer implements XSerializer {
 		}
 
 		// add log attrs to output
-		output.set("log-attrs",logAttrs);
-		output.set("log-children",logChildren);
+		output.set("log-properties",logAttrs);
+		output.set("log-attrs",logChildren);
 
 
 
@@ -281,7 +281,7 @@ public final class JxesJacksonSerializer implements XSerializer {
 			for(XAttribute attr : attribute.getAttributes().values()) {
 				addAttr(attr,nestedAttributes);
 			}
-			object.set("nested-attributes", nestedAttributes);
+			object.set("nested-attrs", nestedAttributes);
 			object.set("value", json.get(attribute.getKey()));
 			json.set(attribute.getKey(),object);
 		}

@@ -113,8 +113,8 @@ public final class JxesGsonSerializer implements XSerializer {
 		}
 
 		// add log attrs to output
-		output.add("log-attrs",logAttrs);
-		output.add("log-children",logChildren);
+		output.add("log-properties",logAttrs);
+		output.add("log-attrs",logChildren);
 
 
 		//create global attributes
@@ -288,7 +288,7 @@ public final class JxesGsonSerializer implements XSerializer {
 			for(XAttribute attr : attribute.getAttributes().values()) {
 				addAttr(attr,nestedAttributes);
 			}
-			object.add("nested-attributes", nestedAttributes);
+			object.add("nested-attrs", nestedAttributes);
 			object.add("value", json.get(attribute.getKey()));
 			json.add(attribute.getKey(),object);
 		}

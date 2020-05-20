@@ -112,8 +112,8 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 			}
 
 			// add log attrs to output
-			output.put("log-attrs",logAttrs);
-			output.put("log-children",logChildren);
+			output.put("log-properties",logAttrs);
+			output.put("log-attrs",logChildren);
 
 
 		}catch (JSONException e) {
@@ -336,7 +336,7 @@ public final class JxesJsonSimpleSerializer implements XSerializer {
 				for(XAttribute attr : attribute.getAttributes().values()) {
 					addAttr(attr,nestedAttributes);
 				}
-				object.put("nested-attributes", nestedAttributes);
+				object.put("nested-attrs", nestedAttributes);
 				object.put("value", json.get(attribute.getKey()));
 				json.put(attribute.getKey(),object);
 			}

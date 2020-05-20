@@ -98,7 +98,7 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		
 		
 		// add json key:
-		writer.writeObjectField("log-attrs");
+		writer.writeObjectField("log-properties");
 		
 		//begin log-attrs object 
 		writer.writeObjectStart();
@@ -122,7 +122,7 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		writer.writeObjectEnd();
 		
 		//begin log-children object
-		writer.writeObjectField("log-children");
+		writer.writeObjectField("log-attrs");
 		writer.writeObjectStart();
 	
 
@@ -351,7 +351,7 @@ public final class JxesJsoniterSerializer implements XSerializer {
 
 		if(nested){
 			// add nested attributes
-			json.writeObjectField("nested-attributes");
+			json.writeObjectField("nested-attrs");
 			// begin nested-attributes object
 			json.writeObjectStart();
 			for(XAttribute attr : attribute.getAttributes().values()) {

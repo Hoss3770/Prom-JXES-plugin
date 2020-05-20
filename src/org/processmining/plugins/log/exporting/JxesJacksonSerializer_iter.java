@@ -105,7 +105,7 @@ public final class JxesJacksonSerializer_iter implements XSerializer {
 		
 		
 		// add json key:
-		writer.writeFieldName("log-attrs");
+		writer.writeFieldName("log-properties");
 		
 		//begin log-attrs object 
 		writer.writeStartObject();
@@ -121,7 +121,7 @@ public final class JxesJacksonSerializer_iter implements XSerializer {
 		writer.writeEndObject();
 		
 		//begin log-children object
-		writer.writeFieldName("log-children");
+		writer.writeFieldName("log-attrs");
 		writer.writeStartObject();
 	
 
