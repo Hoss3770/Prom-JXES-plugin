@@ -15,5 +15,7 @@ public class OpenNaiveLogFilePlugin extends OpenLogFilePlugin {
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 	throws Exception {
 		return importFromStream(context, input, filename, fileSizeInBytes, new XFactoryNaiveImpl());
+		
+		
 	}
 }

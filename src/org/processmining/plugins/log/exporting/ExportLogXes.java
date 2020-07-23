@@ -34,6 +34,9 @@ public class ExportLogXes extends AbstractLogExporter {
 		XSerializer logSerializer = new XesXmlSerializer();
 		logSerializer.serialize(log, out);
 		out.close();
+		System.out.println(
+				"Memory used: " + ((double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
+						/ (double) (1024 * 1024)));
 	}
 
 }

@@ -118,7 +118,7 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 		//add log-attributes to the XLog object
 		try {
 			// get the log-children object (which contains the log-attributes)
-			JSONObject logChildren = obj.getJSONObject("log-children");
+			JSONObject logChildren = obj.getJSONObject("log-attrs");
 			
 			// get the attribute names
 			Iterator<String> logKeys = logChildren.keys();
@@ -278,7 +278,7 @@ public class OpenNaiveLogFilePluginJsonSimple extends OpenLogFilePlugin {
 			String text = (String) attr;
 			Date date;
 			try {
-				date = DateUtil.parse(text);
+				date = dateFormat.parse(text);
 				attribute = new XAttributeTimestampImpl(key , date);
 			} catch (ParseException e) {
 				attribute = new XAttributeLiteralImpl( key, text);

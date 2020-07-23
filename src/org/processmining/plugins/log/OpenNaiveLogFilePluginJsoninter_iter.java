@@ -102,7 +102,7 @@ public class OpenNaiveLogFilePluginJsoninter_iter extends OpenLogFilePlugin {
 		// iterate over the whole json file
 		for (String key = iter.readObject(); key != null; key = iter.readObject()) {
 			switch (key) {
-				case "log-children" :
+				case "log-attrs" :
 					buildLogAttrs(iter);
 					break;
 				case "extensions" :
@@ -151,7 +151,7 @@ public class OpenNaiveLogFilePluginJsoninter_iter extends OpenLogFilePlugin {
 			String text = attr.toString();
 			Date date;
 			try {
-				date = DateUtil.parse(text);
+				date = dateFormat.parse(text);
 				attribute = new XAttributeTimestampImpl(key, date);
 			} catch (ParseException e) {
 				attribute = new XAttributeLiteralImpl(key, text);

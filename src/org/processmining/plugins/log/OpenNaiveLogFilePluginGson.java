@@ -99,7 +99,7 @@ public class OpenNaiveLogFilePluginGson extends OpenLogFilePlugin {
 		
 		//add log-attributes to the XLog object
 		
-		JsonObject logChildren = obj.get("log-children").getAsJsonObject();
+		JsonObject logChildren = obj.get("log-attrs").getAsJsonObject();
 		//create a map which will hold all log attributes 
 		XAttributeMapImpl logAttributes = new XAttributeMapImpl();
 		// loop on all attributes and add them to map
@@ -240,7 +240,7 @@ public class OpenNaiveLogFilePluginGson extends OpenLogFilePlugin {
 				String text = attr.getAsJsonPrimitive().getAsString();
 				Date date;
 				try {
-					date = DateUtil.parse(text);
+					date = dateFormat.parse(text);
 					attribute = new XAttributeTimestampImpl(key , date);
 				} catch (ParseException e) {
 					attribute = new XAttributeLiteralImpl( key, text);

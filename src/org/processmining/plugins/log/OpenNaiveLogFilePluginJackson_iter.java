@@ -69,11 +69,11 @@ public class OpenNaiveLogFilePluginJackson_iter extends OpenLogFilePlugin {
 		while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
 			String key = jsonParser.getCurrentName();
 			switch (key) {
-				case "log-attrs" :
+				case "log-properties" :
 					//skip log attrs
 					while(jsonParser.nextToken() != JsonToken.END_OBJECT);
 					break;
-				case "log-children" :
+				case "log-attrs" :
 					buildLogAttrs(jsonParser);
 					break;
 				case "extensions" :
@@ -124,7 +124,7 @@ public class OpenNaiveLogFilePluginJackson_iter extends OpenLogFilePlugin {
 			String text = iter.getText();
 			Date date;
 			try {
-				date = DateUtil.parse(text);
+				date = dateFormat.parse(text);
 				attribute = new XAttributeTimestampImpl(key, date);
 			} catch (ParseException e) {
 				attribute = new XAttributeLiteralImpl(key, text);

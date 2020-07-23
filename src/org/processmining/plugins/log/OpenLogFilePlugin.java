@@ -127,7 +127,8 @@ public class OpenLogFilePlugin extends AbstractImportPlugin {
 		if (context != null) {
 			context.getFutureResult(0).setLabel(XConceptExtension.instance().extractName(log));
 		}
-
+		
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 		return log;
 
 	}

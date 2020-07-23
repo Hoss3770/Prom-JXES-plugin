@@ -116,7 +116,7 @@ public class OpenNaiveLogFilePluginJsoninter extends OpenLogFilePlugin {
 		
 		//add log attributes to the XLog object
 		// create a map which holds all log attributes <key,value>
-		Map<String, Any> logChildren = obj.get("log-children").asMap();
+		Map<String, Any> logChildren = obj.get("log-attrs").asMap();
 		//create a map which will hold all log attributes 
 		XAttributeMapImpl logAttributes = new XAttributeMapImpl();
 		// for each attribute --> create attribute --> add it to the map
@@ -206,7 +206,7 @@ public class OpenNaiveLogFilePluginJsoninter extends OpenLogFilePlugin {
 			String text = attr.toString();
 			Date date;
 			try {
-				date = DateUtil.parse(text);
+				date = dateFormat.parse(text);
 				attribute = new XAttributeTimestampImpl(key, date);
 			} catch (ParseException e) {
 				attribute = new XAttributeLiteralImpl(key, text);

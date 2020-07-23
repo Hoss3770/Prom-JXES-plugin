@@ -18,7 +18,7 @@ import org.processmining.framework.plugin.annotations.PluginVariant;
 @UIExportPlugin(description = "MXML files", extension = "mxml")
 public class ExportLogMxml extends AbstractLogExporter {
 
-	@UITopiaVariant(affiliation = UITopiaVariant.EHV, author = "H.M.W Verbeek", email = "h.m.w.verbeek@tue.nl")
+	@UITopiaVariant(affiliation = UITopiaVariant.EHV, author = "Hossameldin Khalifa", email = "hosskhalifa@gmail.com")
 	@PluginVariant(requiredParameterLabels = { 0, 1 }, variantLabel = "Export Log to XMXL File")
 	public void export(UIPluginContext context, XLog log, File file) throws IOException {		
 		exportWithNameFromContext(context, log, file);

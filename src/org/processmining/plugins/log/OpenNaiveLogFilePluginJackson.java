@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.deckfour.xes.classification.XEventAttributeClassifier;
 import org.deckfour.xes.classification.XEventClassifier;
 import org.deckfour.xes.extension.XExtension;
@@ -31,7 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Plugin(name = "Open JXES (Jackson)", level = PluginLevel.PeerReviewed, parameterLabels = { "Filename" }, returnLabels = { "Log (single process)" }, returnTypes = { XLog.class })
 @UIImportPlugin(description = "ProM log files JXES (Jackson)", extensions = {"json"})
 public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
-//	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
+	private final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy/MM/dd HH:mm:ss.SSS");
 	protected Object importFromStream(PluginContext context, InputStream input, String filename, long fileSizeInBytes)
 	throws Exception {
 		
@@ -102,7 +103,7 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 		
 	
 		//add log-attributes to the XLog object
-		JsonNode logChildren = obj.get("log-children");
+		JsonNode logChildren = obj.get("log-attrs");
 		Iterator<String> logKeys = logChildren.fieldNames();
 		 
 		XAttributeMapImpl logAttributes = new XAttributeMapImpl();
@@ -276,7 +277,7 @@ public class OpenNaiveLogFilePluginJackson extends OpenLogFilePlugin {
 			String text = attr.asText();
 			Date date;
 			try {
-				date = DateUtil.parse(text);
+				date = dateFormat.parse(text);
 				attribute = new XAttributeTimestampImpl(key , date);
 			} catch (ParseException e) {
 				attribute = new XAttributeLiteralImpl( key, text);

@@ -27,6 +27,7 @@ public class ExportLogXesGz extends AbstractLogExporter {
 		FileOutputStream out = new FileOutputStream(file);
 		XSerializer logSerializer = new XesXmlGZIPSerializer();
 		logSerializer.serialize(log, out);
+		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
 		out.close();
 	}
 
