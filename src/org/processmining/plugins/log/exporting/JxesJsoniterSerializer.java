@@ -114,12 +114,12 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		
 		writer.writeObjectField("openxes.version");
 		writer.writeVal(XRuntimeUtils.OPENXES_VERSION);
-		writer.writeMore();
+		
 		
 		
 		//end log-attrs object
 		writer.writeObjectEnd(); 
-		writer.writeObjectEnd();
+		writer.writeMore();
 		
 		//begin log-children object
 		writer.writeObjectField("log-attrs");
@@ -127,12 +127,19 @@ public final class JxesJsoniterSerializer implements XSerializer {
 	
 
 		// iterate over all log attributes
+		boolean firstIteration = true;
 		for (XAttribute attr : log.getAttributes().values()) {
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			addAttr(attr,writer);
 		}
 
 		// end log-children object
 		writer.writeObjectEnd();
+		writer.writeMore();
 
 
 		//
@@ -146,34 +153,55 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		writer.writeObjectStart();
 		
 		//add global trace attributes
+		firstIteration = true;
 		for (XAttribute attr : log.getGlobalTraceAttributes()) {
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			addAttr(attr,writer);
 		}
 	
 		// end object trace
 		writer.writeObjectEnd();
 		
+		writer.writeMore();
 		
 		//begin object event
 		writer.writeObjectField("event");
 		writer.writeObjectStart();
 
 		//add global event attributes
+		firstIteration = true;
 		for (XAttribute attr : log.getGlobalEventAttributes()) {
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			addAttr(attr,writer);
 		}
 		// end object event
 		writer.writeObjectEnd();
-
+		
 		// end global object
 		writer.writeObjectEnd();
+		
+		writer.writeMore();
 
 
 
 		//begin extensions array [
 		writer.writeObjectField("extensions");
 		writer.writeArrayStart();
+		firstIteration = true;
 		for (XExtension extension : log.getExtensions()) {
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			// begin object for every new extension {
 			writer.writeObjectStart();
 
@@ -195,6 +223,7 @@ public final class JxesJsoniterSerializer implements XSerializer {
 
 		// end extensions array ]
 		writer.writeArrayEnd();
+		writer.writeMore();
 
 
 		//begin classifiers object {
@@ -202,10 +231,15 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		writer.writeObjectStart();
 
 		//iterate over all event classifiers 
+		boolean firstIterationClassifier = true;
 		for (XEventClassifier classifier : log.getClassifiers()) {
-
+			
 			if (classifier instanceof XEventAttributeClassifier) {
-				
+				if (firstIterationClassifier) {
+					firstIterationClassifier = false;
+				}else {
+					writer.writeMore();
+				}
 				// get classifier object to exract names and values
 				XEventAttributeClassifier attrClass = (XEventAttributeClassifier) classifier;
 				
@@ -214,11 +248,19 @@ public final class JxesJsoniterSerializer implements XSerializer {
 				writer.writeArrayStart();
 				
 				// get and iterate on classifier key
+				firstIteration = true;
 				String[] myArray = attrClass.getDefiningAttributeKeys();
 				for (int i = 0; i < myArray.length; i++) {
+					if (firstIteration) {
+						firstIteration = false;
+						
+					}else {
+						writer.writeMore();
+					}
 					// add key to array
 					writer.writeVal(myArray[i]);
-					writer.writeMore();
+					
+					
 			    }
 
 				writer.writeArrayEnd();
@@ -227,6 +269,7 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		//end classifiers object }
 		writer.writeObjectEnd();
 
+		writer.writeMore();
 
 
 		// begin traces array
@@ -234,7 +277,13 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		writer.writeArrayStart();
 
 		// add all traces
+		firstIteration = true;
 		for (XTrace trace : log) {
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			compileTrace(trace,writer);
 		}
 		
@@ -259,26 +308,45 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		writer.writeObjectField("attrs");
 		writer.writeObjectStart();
 		// iterate over all trace attirbutes
+		boolean firstIteration = true;
 		for (XAttribute attr : trace.getAttributes().values()){
+			if (firstIteration) {
+				firstIteration = false;
+			}else {
+				writer.writeMore();
+			}
 			addAttr(attr,writer);
 		}
 		// end trace attributes
 		writer.writeObjectEnd();
-		
+		writer.writeMore();
 		// add trace events
 		writer.writeObjectField("events");
 		writer.writeArrayStart();
 
 		// iterate over all events in this trace
+		boolean firstIterationEvent = true;
 		for (ListIterator<XEvent> iterator = trace.listIterator(); iterator.hasNext();) {
+			if (firstIterationEvent) {
+				firstIterationEvent = false;
+			}else {
+				writer.writeMore();
+			}
 			// begin event 
 			writer.writeObjectStart();
 			XEvent event = iterator.next();
+			firstIteration = true;
 			for (XAttribute attr : event.getAttributes().values()) {
+				if (firstIteration) {
+					firstIteration = false;
+				}else {
+					writer.writeMore();
+				}
 				addAttr(attr,writer);
 			}
 			//end event 
 			writer.writeObjectEnd();
+			
 		}
 		
 		//end events array
@@ -310,24 +378,30 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		if (attribute instanceof XAttributeTimestamp) {
 			Date timestamp = ((XAttributeTimestamp) attribute).getValue();
 			json.writeVal(dateFormat.format(timestamp));
-			json.writeMore();
+			
 
 		} else if (attribute instanceof XAttributeDiscrete ||  attribute instanceof XAttributeContinuous ) {
 			json.writeVal( Double.parseDouble(attribute.toString()));
-			json.writeMore();
+			
 		} else if (attribute instanceof XAttributeBoolean ) {
 			json.writeVal( ((XAttributeBoolean) attribute).getValue());
-			json.writeMore();
+			
 		} else if (attribute instanceof XAttributeList ) {
 			// get XAttributeList
 			Collection<XAttribute> list = ((XAttributeList) attribute).getCollection();
 			// begin the json array [
 			json.writeArrayStart();
 			// for every attribute in the list create a json object
+			boolean firstIteration = true;
 			for (XAttribute attr : list) {
 				// begin the object {
 				json.writeObjectStart();
 				// run the method with the attribute
+				if (firstIteration) {
+					firstIteration = false;
+				}else {
+					json.writeMore();
+				}
 				addAttr(attr,json);
 				// end the object }
 				json.writeObjectEnd();
@@ -338,23 +412,35 @@ public final class JxesJsoniterSerializer implements XSerializer {
 		} else if (attribute instanceof XAttributeContainer ) {
 			Collection<XAttribute> container = ((XAttributeContainer) attribute).getCollection();
 			json.writeObjectStart();
+			boolean firstIteration = true;
 			for (XAttribute attr : container) {
+				if (firstIteration) {
+					firstIteration = false;
+				}else {
+					json.writeMore();
+				}
 				addAttr(attr,json);
 			}
 			json.writeObjectEnd();
 		} else {
 			json.writeVal(attribute.toString());
-			json.writeMore();
-
 		}
 
 
 		if(nested){
+			// split between "value:" and "nested-attrs"
+			json.writeMore();
 			// add nested attributes
 			json.writeObjectField("nested-attrs");
 			// begin nested-attributes object
 			json.writeObjectStart();
+			boolean firstIteration = true;
 			for(XAttribute attr : attribute.getAttributes().values()) {
+				if (firstIteration) {
+					firstIteration = false;
+				}else {
+					json.writeMore();
+				}
 				addAttr(attr,json);
 			}
 			// end nested-attributes object }

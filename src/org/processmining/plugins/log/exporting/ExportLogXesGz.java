@@ -14,10 +14,11 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginLevel;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 
-@Plugin(name = "Export Log to compressed XES File", level = PluginLevel.PeerReviewed, parameterLabels = { "Log", "File" }, returnLabels = {}, returnTypes = {}, userAccessible = true)
+@Plugin(name = "Export Log to compressed XES File", level = PluginLevel.PeerReviewed, parameterLabels = { "Log",
+		"File" }, returnLabels = {}, returnTypes = {}, userAccessible = true)
 @UIExportPlugin(description = "Compressed XES files", extension = "xes.gz")
 public class ExportLogXesGz extends AbstractLogExporter {
-	@UITopiaVariant(affiliation = UITopiaVariant.EHV, author = "H.M.W Verbeek", email = "h.m.w.verbeek@tue.nl")
+	@UITopiaVariant(affiliation = UITopiaVariant.EHV, author = "hosskhalifa@gmail.com", email = "Hossameldin Khalifa")
 	@PluginVariant(requiredParameterLabels = { 0, 1 }, variantLabel = "Export Log to compressed XES File")
 	public void export(UIPluginContext context, XLog log, File file) throws IOException {
 		exportWithNameFromContext(context, log, file);
@@ -27,7 +28,9 @@ public class ExportLogXesGz extends AbstractLogExporter {
 		FileOutputStream out = new FileOutputStream(file);
 		XSerializer logSerializer = new XesXmlGZIPSerializer();
 		logSerializer.serialize(log, out);
-		System.out.println("Memory used: " +  ((double)( Runtime.getRuntime().totalMemory() -  Runtime.getRuntime().freeMemory()) / (double) (1024 * 1024)));
+		System.out.println(
+				"Memory used: " + ((double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())
+						/ (double) (1024 * 1024)));
 		out.close();
 	}
 
